@@ -17,7 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.function.Function;
 
-@Mojo(name = "tableGenerator")
+@Mojo(name = "generator")
 public class TableGeneratorMojo extends AbstractMojo {
 
     @Parameter(property = "tableSourceRoot", required = true, readonly = true)
