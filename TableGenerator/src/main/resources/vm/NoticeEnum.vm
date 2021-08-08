@@ -1,0 +1,18 @@
+package ${packageName};
+
+public enum ${className} {
+#foreach($info in $infoList)
+    /**${info.desc}*/
+    ${info.getName()}(${info.getCode()}),
+#end
+    ;
+    private final int code;
+
+    NoticeEnum(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
+}
