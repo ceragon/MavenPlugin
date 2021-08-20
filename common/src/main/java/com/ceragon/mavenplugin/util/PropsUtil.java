@@ -1,4 +1,4 @@
-package com.ceragon.mavenplugin.table.util;
+package com.ceragon.mavenplugin.util;
 
 
 import org.apache.commons.lang.StringUtils;

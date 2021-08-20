@@ -1,6 +1,5 @@
 package com.ceragon.mavenplugin.table.constant;
 
-import com.ceragon.mavenplugin.table.util.PropsUtil;
 import lombok.Data;
 import org.apache.maven.plugin.logging.Log;
 

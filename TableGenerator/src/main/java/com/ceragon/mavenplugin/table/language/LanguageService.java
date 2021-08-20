@@ -1,7 +1,7 @@
 package com.ceragon.mavenplugin.table.language;
 
 import com.ceragon.mavenplugin.table.constant.ConfigContext;
-import com.ceragon.mavenplugin.table.util.CodeGenTool;
+import com.ceragon.mavenplugin.util.CodeGenTool;
 import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;

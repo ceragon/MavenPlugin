@@ -5,11 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ceragon</groupId>
-    <artifactId>TableMavenPlugin</artifactId>
+    <artifactId>GameMavenPlugin</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>TableGenerator</module>
+        <module>RPCGenerator</module>
+        <module>common</module>
     </modules>
 
     <properties>
