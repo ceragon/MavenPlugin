@@ -8,12 +8,15 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.JarURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -29,6 +32,22 @@ public class ClassUtil {
     public ClassUtil(Log log, ClassLoader classLoader) {
         this.log = log;
         this.classLoader = classLoader;
+    }
+
+    public ClassUtil(Log log, List<String> compilePath) throws MalformedURLException {
+        this.log = log;
+        this.classLoader = getClassLoader(compilePath);
+    }
+
+    public static ClassLoader getClassLoader(List<String> compilePath) throws MalformedURLException {
+        // 转为 URL 数组
+        URL[] urls = new URL[compilePath.size()];
+        for (int i = 0; i < compilePath.size(); ++i) {
+            urls[i] = new File(compilePath.get(i)).toPath().toUri().toURL();
+        }
+        // 自定义类加载器
+        return new URLClassLoader(urls, ClassUtil.class.getClassLoader());
+
     }
 
     /**
@@ -110,10 +129,15 @@ public class ClassUtil {
                     log.info("start load:" + className);
                     Class clazz = classLoader.loadClass(className);
                     log.info("load finish:" + clazz);
-                    Annotation ann = clazz.getAnnotation(annClazz);
-                    if (ann != null) {
+                    if (annClazz != null) {
+                        Annotation ann = clazz.getAnnotation(annClazz);
+                        if (ann != null) {
+                            classes.add(clazz);
+                        }
+                    } else {
                         classes.add(clazz);
                     }
+
                 } catch (Exception e) {
                     if (log.isErrorEnabled()) log.error("加载类<" + className + ">出错", e);
                 }
@@ -148,8 +172,12 @@ public class ClassUtil {
                 className = className.substring(0, className.length() - 6);
                 try {
                     Class clazz = classLoader.loadClass(className);
-                    Annotation ann = clazz.getAnnotation(annClazz);
-                    if (ann != null) {
+                    if (annClazz != null) {
+                        Annotation ann = clazz.getAnnotation(annClazz);
+                        if (ann != null) {
+                            classes.add(clazz);
+                        }
+                    } else {
                         classes.add(clazz);
                     }
                 } catch (Exception e) {

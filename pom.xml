@@ -12,6 +12,7 @@
         <module>TableGenerator</module>
         <module>RPCGenerator</module>
         <module>common</module>
+        <module>ProtoGenerator</module>
     </modules>
 
     <properties>
@@ -70,6 +71,12 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.29</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>3.8.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
