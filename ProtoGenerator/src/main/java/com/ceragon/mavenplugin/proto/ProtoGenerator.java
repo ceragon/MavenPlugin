@@ -1,11 +1,10 @@
 package com.ceragon.mavenplugin.proto;
 
 import com.ceragon.mavenplugin.proto.bean.ErrorMsg;
-import com.ceragon.mavenplugin.proto.bean.config.PathType;
 import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
+import com.ceragon.mavenplugin.proto.core.MsgCodeBuild;
 import com.ceragon.mavenplugin.util.ClassUtil;
-import com.ceragon.mavenplugin.util.CodeGenTool;
 import org.yaml.snakeyaml.Yaml;
 import com.google.protobuf.DescriptorProtos.MessageOptions;
 import com.google.protobuf.Descriptors;
@@ -36,12 +35,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 @Mojo(name = "generator", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.COMPILE)
 public class ProtoGenerator extends AbstractMojo {
@@ -93,20 +90,10 @@ public class ProtoGenerator extends AbstractMojo {
         Map<String, Object> content = new HashMap<>();
         content.put("infoList", allProtoMsgInfos);
         String resourceRoot = this.project.getBuild().getOutputDirectory();
-        String baseSrcDir = this.project.getBuild().getSourceDirectory();
         List<Exception> exceptions = new ArrayList<>();
-        protoConfig.getVmInfoList().forEach(vmInfo -> {
-                    String sourceName = vmInfo.getVmFile();
-                    String destPath = vmInfo.getTargetFile();
-                    if (vmInfo.getTargetPathType() == PathType.src) {
-                        destPath = baseSrcDir + File.separator + destPath;
-                    }
-                    try {
-                        CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, content);
-                    } catch (Exception e) {
-                        exceptions.add(e);
-                    }
-                });
+        MsgCodeBuild build = new MsgCodeBuild(project, resourceRoot, content, exceptions);
+        protoConfig.getAllMsg().forEach(build::processAllMsg);
+        protoConfig.getEachMsg().forEach(build::processEachMsg);
         if (exceptions.isEmpty()) {
             return true;
         }

@@ -18,24 +18,24 @@ public class CodeGenTool {
     private CodeGenTool() {
     }
 
-    public static void createCodeByPath(String sourcePath, String sourceName, String desPath, Map<String, Object> content) throws IOException {
+    public static void createCodeByPath(String sourcePath, String sourceName, String desPath,boolean overwrite, Map<String, Object> content) throws IOException {
         VelocityEngine ve = new VelocityEngine();
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, sourcePath);
         ve.init();
-        createCode(ve, sourceName, desPath, content);
+        createCode(ve, sourceName, desPath,overwrite, content);
     }
 
-    public static void createCodeByClasspath(String sourceName, String desPath, Map<String, Object> content) throws IOException {
+    public static void createCodeByClasspath(String sourceName, String desPath,boolean overwrite, Map<String, Object> content) throws IOException {
         VelocityEngine ve = new VelocityEngine();
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
         ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
         ve.init();
-        createCode(ve, sourceName, desPath, content);
+        createCode(ve, sourceName, desPath, overwrite, content);
     }
 
-    private static void createCode(VelocityEngine ve, String sourceName, String desPath, Map<String, Object> content) throws IOException {
+    private static void createCode(VelocityEngine ve, String sourceName, String desPath, boolean overwrite, Map<String, Object> content) throws IOException {
         Template t = ve.getTemplate(sourceName);
         VelocityContext ctx = new VelocityContext();
         for (Map.Entry<String, Object> entry : content.entrySet()) {
@@ -46,6 +46,10 @@ public class CodeGenTool {
         t.merge(ctx, sw);
         FileOutputStream out = null;
         File file = new File(desPath);
+        if (file.exists() && !overwrite) {
+            return;
+        }
+
         if (!file.exists()) {
             File parent = file.getParentFile();
             if (!parent.exists()) {
