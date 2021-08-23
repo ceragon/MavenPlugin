@@ -1,9 +1,11 @@
 package com.ceragon.mavenplugin.proto;
 
 import com.ceragon.mavenplugin.proto.bean.ErrorMsg;
+import com.ceragon.mavenplugin.proto.bean.MsgDesc;
 import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
 import com.ceragon.mavenplugin.proto.core.MsgCodeBuild;
+import com.ceragon.mavenplugin.proto.core.MsgInfoLoad;
 import com.ceragon.mavenplugin.util.ClassUtil;
 import org.yaml.snakeyaml.Yaml;
 import com.google.protobuf.DescriptorProtos.MessageOptions;
@@ -87,13 +89,17 @@ public class ProtoGenerator extends AbstractMojo {
     }
 
     private boolean buildProtoCode(ProtoConfig protoConfig, List<ProtoMsgInfo> allProtoMsgInfos) {
-        Map<String, Object> content = new HashMap<>();
-        content.put("infoList", allProtoMsgInfos);
+
         String resourceRoot = this.project.getBuild().getOutputDirectory();
         List<Exception> exceptions = new ArrayList<>();
-        MsgCodeBuild build = new MsgCodeBuild(project, resourceRoot, content, exceptions);
+        Map<String, Object> content = new HashMap<>();
+        MsgCodeBuild build = new MsgCodeBuild(project, resourceRoot, allProtoMsgInfos, content, exceptions);
+        content.put("infoList", allProtoMsgInfos);
         protoConfig.getAllMsg().forEach(build::processAllMsg);
+        content.clear();
         protoConfig.getEachMsg().forEach(build::processEachMsg);
+        content.clear();
+        protoConfig.getEachClass().forEach(build::processEachClass);
         if (exceptions.isEmpty()) {
             return true;
         }
@@ -127,7 +133,7 @@ public class ProtoGenerator extends AbstractMojo {
                         .forEach(entry -> errorMsgList.add(ErrorMsg.builder()
                                 .className(info.getClassName())
                                 .msgId(entry.getKey())
-                                .msgName(entry.getValue())
+                                .msgName(entry.getValue().getName())
                                 .build())));
         return errorMsgList;
     }
@@ -136,8 +142,8 @@ public class ProtoGenerator extends AbstractMojo {
         for (Class<?> protoClass : protoClasses) {
             ProtoMsgInfo.ProtoMsgInfoBuilder builder = ProtoMsgInfo.builder();
             AtomicInteger maxMsgId = new AtomicInteger();
-            forEachMsg(protoClass, (msgId, msgName) -> {
-                builder.msgIdAndName(msgId, msgName);
+            new MsgInfoLoad(msgIdField).forEachMsg(protoClass, (msgId, msgDesc) -> {
+                builder.msgIdAndName(msgId, msgDesc);
                 if (msgId > maxMsgId.get()) {
                     maxMsgId.set(msgId);
                 }
@@ -149,41 +155,5 @@ public class ProtoGenerator extends AbstractMojo {
         }
     }
 
-    /**
-     * 遍历类中的每一个消息
-     *
-     * @param protoClass
-     * @param consumer   处理遍历到的消息Id和内容
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     */
-    private void forEachMsg(Class<?> protoClass, BiConsumer<Integer, String> consumer) throws IllegalAccessException, InvocationTargetException {
-        // 过滤一部分类
-        if (protoClass.getSuperclass() != Object.class) {
-            return;
-        }
-        // 类必须包含msgIdField这个字段
-        Optional<Field> optional = Arrays.stream(protoClass.getDeclaredFields())
-                .filter(f -> f.getName().equals(msgIdField)).findFirst();
-        if (optional.isEmpty()) {
-            return;
-        }
-        // 必须包含 getDescriptor 这个方法
-        Optional<Method> methodOptional = Arrays.stream(protoClass.getDeclaredMethods())
-                .filter(f -> f.getName().equals("getDescriptor")).findFirst();
-        if (methodOptional.isEmpty()) {
-            return;
-        }
-        Field field = optional.get();
-        GeneratedExtension<MessageOptions, Integer> msgIdExtension = (GeneratedExtension<MessageOptions, Integer>) field.get(protoClass);
 
-        Method method = methodOptional.get();
-        FileDescriptor fileDescriptor = (FileDescriptor) method.invoke(protoClass);
-
-        for (Descriptors.Descriptor descriptor : fileDescriptor.getMessageTypes()) {
-            int msgId = descriptor.getOptions().getExtension(msgIdExtension);
-            String name = descriptor.getName();
-            consumer.accept(msgId, name);
-        }
-    }
 }

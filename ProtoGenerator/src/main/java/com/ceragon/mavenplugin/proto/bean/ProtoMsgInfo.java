@@ -11,6 +11,6 @@ import java.util.SortedMap;
 public class ProtoMsgInfo {
     private String className;
     @Singular
-    private SortedMap<Integer, String> msgIdAndNames;
+    private SortedMap<Integer, MsgDesc> msgIdAndNames;
     private int maxMsgId;
 }

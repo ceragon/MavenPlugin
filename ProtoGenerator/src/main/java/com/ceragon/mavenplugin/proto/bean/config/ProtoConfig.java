@@ -9,4 +9,5 @@ import java.util.List;
 public class ProtoConfig {
     private List<ProtoAllMsgBuildConfig> allMsg = new ArrayList<>();
     private List<ProtoEachMsgBuildConfig> eachMsg = new ArrayList<>();
+    private List<ProtoEachClassBuildConfig> eachClass = new ArrayList<>();
 }
