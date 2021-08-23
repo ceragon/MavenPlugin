@@ -38,7 +38,7 @@ public class LanguageService {
         String destPath = context.getOutputDirectory().getPath() + File.separator + path + File.separator +
                 context.getLangClassName() + ".java";
         try {
-            CodeGenTool.createCode("NoticeEnum.vm", destPath, contentMap);
+            CodeGenTool.createCodeByClasspath("vm/NoticeEnum.vm", destPath, contentMap);
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             return false;

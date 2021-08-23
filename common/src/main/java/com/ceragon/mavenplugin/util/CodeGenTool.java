@@ -18,15 +18,25 @@ public class CodeGenTool {
     private CodeGenTool() {
     }
 
-    public static void createCode(String sourceName, String desPath, Map<String, Object> content) throws IOException {
+    public static void createCodeByPath(String sourcePath, String sourceName, String desPath, Map<String, Object> content) throws IOException {
         VelocityEngine ve = new VelocityEngine();
-//        ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH,sourcePath);
-        ve.setProperty(VelocityEngine.INPUT_ENCODING,"UTF-8");
+        ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
+        ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, sourcePath);
+        ve.init();
+        createCode(ve, sourceName, desPath, content);
+    }
+
+    public static void createCodeByClasspath(String sourceName, String desPath, Map<String, Object> content) throws IOException {
+        VelocityEngine ve = new VelocityEngine();
+        ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
         ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
         ve.init();
+        createCode(ve, sourceName, desPath, content);
+    }
 
-        Template t = ve.getTemplate("vm/"+sourceName);
+    private static void createCode(VelocityEngine ve, String sourceName, String desPath, Map<String, Object> content) throws IOException {
+        Template t = ve.getTemplate(sourceName);
         VelocityContext ctx = new VelocityContext();
         for (Map.Entry<String, Object> entry : content.entrySet()) {
             ctx.put(entry.getKey(), entry.getValue());
@@ -34,26 +44,21 @@ public class CodeGenTool {
         StringWriter sw = new StringWriter();
 
         t.merge(ctx, sw);
-//    PrintWriter out = null
         FileOutputStream out = null;
         File file = new File(desPath);
-        try {
-            if (!file.exists()) {
-                File parent = file.getParentFile();
-                if (!parent.exists()) {
-                    parent.mkdirs();
-                }
-                file.createNewFile();
+        if (!file.exists()) {
+            File parent = file.getParentFile();
+            if (!parent.exists()) {
+                parent.mkdirs();
             }
-            out = new FileOutputStream(file);
-//        out = new PrintWriter(Charset.forName("utf-8",file))
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            file.createNewFile();
         }
+        out = new FileOutputStream(file);
+
         out.write(sw.toString().getBytes(StandardCharsets.UTF_8));
         out.flush();
         out.close();
     }
+
+
 }

@@ -3,12 +3,16 @@ package com.ceragon.mavenplugin.table;
 import com.ceragon.mavenplugin.table.constant.ConfigContext;
 import com.ceragon.mavenplugin.table.language.LanguageService;
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -17,7 +21,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.function.Function;
 
-@Mojo(name = "generator")
+@Mojo(
+        name = "generator",
+        defaultPhase = LifecyclePhase.GENERATE_SOURCES,
+        requiresDependencyResolution = ResolutionScope.COMPILE,
+        threadSafe = true
+)
 public class TableGeneratorMojo extends AbstractMojo {
 
     @Parameter(property = "tableSourceRoot", required = true, readonly = true)
@@ -33,7 +42,7 @@ public class TableGeneratorMojo extends AbstractMojo {
         //配置velocity的资源加载路径
         ConfigContext context;
         try {
-            context = new ConfigContext(tableSourceDir, outputDirectory,log);
+            context = new ConfigContext(tableSourceDir, outputDirectory, log);
         } catch (Throwable e) {
             throw new MojoFailureException("init config failed", e);
         }

@@ -1,8 +1,12 @@
 package com.ceragon.mavenplugin.proto;
 
 import com.ceragon.mavenplugin.proto.bean.ErrorMsg;
+import com.ceragon.mavenplugin.proto.bean.config.PathType;
+import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
 import com.ceragon.mavenplugin.util.ClassUtil;
+import com.ceragon.mavenplugin.util.CodeGenTool;
+import org.yaml.snakeyaml.Yaml;
 import com.google.protobuf.DescriptorProtos.MessageOptions;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.FileDescriptor;
@@ -16,7 +20,11 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,12 +32,16 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 @Mojo(name = "generator", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.PACKAGE)
 public class ProtoGenerator extends AbstractMojo {
@@ -43,14 +55,21 @@ public class ProtoGenerator extends AbstractMojo {
     public String protoConfigPath;
 
     private Log log;
+    private MavenProject project;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
+        this.project = (MavenProject) getPluginContext().get("project");
         try {
             ClassUtil classUtil = new ClassUtil(log, compilePath);
             Set<Class<?>> protoClasses = classUtil.scan(protoPackage, null);
             List<ProtoMsgInfo> allProtoMsgInfos = new ArrayList<>();
+            // 加载配置
+            ProtoConfig protoConfig = loadProtoConfig();
+            if (protoConfig == null) {
+                throw new MojoFailureException("can't find the protoConfig!Please create the protoConfig.yml in resource dir or set the protoConfigPath in pom.xml");
+            }
             // 封装所有的消息
             buildAllProtoMsgInfos(protoClasses, allProtoMsgInfos);
             // 检查消息列表是否合法
@@ -60,11 +79,56 @@ public class ProtoGenerator extends AbstractMojo {
                 errorMsgList.forEach(errorMsg -> log.error(errorMsg.toString()));
                 throw new MojoFailureException("find repeat msg!");
             }
-
+            // 数据生成
+            if (!buildProtoCode(protoConfig, allProtoMsgInfos)) {
+                throw new MojoFailureException("build proto code failed");
+            }
         } catch (MalformedURLException | IllegalAccessException | InvocationTargetException e) {
             log.error(e.getMessage(), e);
             throw new MojoFailureException(e.getMessage(), e);
         }
+    }
+
+    private boolean buildProtoCode(ProtoConfig protoConfig, List<ProtoMsgInfo> allProtoMsgInfos) {
+        Map<String, Object> content = new HashMap<>();
+        content.put("infoList", allProtoMsgInfos);
+        String resourceRoot = this.project.getBuild().getOutputDirectory();
+        String baseSrcDir = this.project.getBuild().getSourceDirectory();
+        List<Exception> exceptions = new ArrayList<>();
+        protoConfig.getVmInfoList().forEach(vmInfo -> {
+                    String sourceName = vmInfo.getVmFile();
+                    String destPath = vmInfo.getTargetFile();
+                    if (vmInfo.getTargetPathType() == PathType.src) {
+                        destPath = baseSrcDir + File.separator + destPath;
+                    }
+                    try {
+                        CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, content);
+                    } catch (Exception e) {
+                        exceptions.add(e);
+                    }
+                });
+        if (exceptions.isEmpty()) {
+            return true;
+        }
+        for (Exception exception : exceptions) {
+            log.error(exception.getMessage(), exception);
+        }
+        return false;
+    }
+
+    private ProtoConfig loadProtoConfig() {
+        String sourceRoot = project.getBuild().getOutputDirectory();
+        File sourceFile = new File(sourceRoot + File.separator + protoConfigPath);
+        if (!sourceFile.exists()) {
+            return null;
+        }
+        Yaml yaml = new Yaml();
+        try {
+            return yaml.loadAs(new FileReader(sourceFile), ProtoConfig.class);
+        } catch (FileNotFoundException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     private List<ErrorMsg> checkProtoMsg(List<ProtoMsgInfo> allProtoMsgInfos) {
@@ -91,6 +155,9 @@ public class ProtoGenerator extends AbstractMojo {
                     maxMsgId.set(msgId);
                 }
             });
+            if (maxMsgId.get() == 0) {
+                continue;
+            }
             allProtoMsgInfos.add(builder.className(protoClass.getSimpleName()).maxMsgId(maxMsgId.get()).build());
         }
     }
