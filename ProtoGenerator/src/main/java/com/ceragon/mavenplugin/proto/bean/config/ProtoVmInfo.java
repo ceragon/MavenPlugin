@@ -6,5 +6,5 @@ import lombok.Data;
 public class ProtoVmInfo {
     private String vmFile;
     private String targetFile;
-    private PathType targetPathType = PathType.src;
+    private PathType targetPathType = PathType.absolutePath;
 }
