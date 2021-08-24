@@ -70,10 +70,4 @@ public class TableGeneratorMojo extends AbstractMojo {
         }
     }
 
-    public static void main(String[] args) throws MojoExecutionException, MojoFailureException {
-        TableGeneratorMojo mojo = new TableGeneratorMojo();
-        mojo.tableSourceDir = new File("/Users/ceragon/IdeaProjects/gitee/MonkeyGame/TableModule/src/main/resources/model");
-        mojo.outputDirectory = new File("/Users/ceragon/IdeaProjects/gitee/MonkeyGame/TableModule/src/main/java");
-        mojo.execute();
-    }
 }

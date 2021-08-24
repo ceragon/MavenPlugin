@@ -1,17 +1,12 @@
 package com.ceragon.mavenplugin.proto;
 
 import com.ceragon.mavenplugin.proto.bean.ErrorMsg;
-import com.ceragon.mavenplugin.proto.bean.MsgDesc;
-import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
+import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.core.MsgCodeBuild;
 import com.ceragon.mavenplugin.proto.core.MsgInfoLoad;
 import com.ceragon.mavenplugin.util.ClassUtil;
 import org.yaml.snakeyaml.Yaml;
-import com.google.protobuf.DescriptorProtos.MessageOptions;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -22,28 +17,22 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 
 @Mojo(name = "generator", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.COMPILE)
-public class ProtoGenerator extends AbstractMojo {
+public class ProtoGeneratorMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
     public List<String> compilePath;
     @Parameter(property = "protoPackage", required = true, readonly = true)
