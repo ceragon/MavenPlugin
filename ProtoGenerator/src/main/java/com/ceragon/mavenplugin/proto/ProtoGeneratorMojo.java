@@ -8,6 +8,9 @@ import com.ceragon.mavenplugin.proto.core.MsgInfoLoad;
 import com.ceragon.mavenplugin.util.ClassUtil;
 import org.yaml.snakeyaml.Yaml;
 
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.GeneratedMessage;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -20,14 +23,17 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,8 +43,11 @@ public class ProtoGeneratorMojo extends AbstractMojo {
     public List<String> compilePath;
     @Parameter(property = "protoPackage", required = true, readonly = true)
     public String protoPackage;
+    @Parameter(property = "msgIdClass", required = true, readonly = true)
+    public String msgIdClass;
     @Parameter(property = "msgIdField", defaultValue = "msgId", readonly = true)
     public String msgIdField;
+
     @Parameter(property = "protoConfigPath", defaultValue = "protoConfig.yml", readonly = true)
     public String protoConfigPath;
 
@@ -59,7 +68,7 @@ public class ProtoGeneratorMojo extends AbstractMojo {
                 throw new MojoFailureException("can't find the protoConfig!Please create the protoConfig.yml in resource dir or set the protoConfigPath in pom.xml");
             }
             // 封装所有的消息
-            buildAllProtoMsgInfos(protoClasses, allProtoMsgInfos);
+            buildAllProtoMsgInfos(classUtil, protoClasses, allProtoMsgInfos);
             // 检查消息列表是否合法
             List<ErrorMsg> errorMsgList = checkProtoMsg(allProtoMsgInfos);
             if (!errorMsgList.isEmpty()) {
@@ -71,7 +80,7 @@ public class ProtoGeneratorMojo extends AbstractMojo {
             if (!buildProtoCode(protoConfig, allProtoMsgInfos)) {
                 throw new MojoFailureException("build proto code failed");
             }
-        } catch (MalformedURLException | IllegalAccessException | InvocationTargetException e) {
+        } catch (MalformedURLException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
             log.error(e.getMessage(), e);
             throw new MojoFailureException(e.getMessage(), e);
         }
@@ -127,11 +136,24 @@ public class ProtoGeneratorMojo extends AbstractMojo {
         return errorMsgList;
     }
 
-    private void buildAllProtoMsgInfos(Set<Class<?>> protoClasses, List<ProtoMsgInfo> allProtoMsgInfos) throws InvocationTargetException, IllegalAccessException {
+    private void buildAllProtoMsgInfos(ClassUtil classUtil, Set<Class<?>> protoClasses, List<ProtoMsgInfo> allProtoMsgInfos) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException {
+        Class<?> msgIdClass = classUtil.loadClass(this.msgIdClass);
+        // 类必须包含msgIdField这个字段
+        Optional<Field> optional = Arrays.stream(msgIdClass.getDeclaredFields())
+                .filter(f -> f.getName().equals(msgIdField)).findFirst();
+        if (optional.isEmpty()) {
+            return;
+        }
+        Field field = optional.get();
+        GeneratedMessage.GeneratedExtension<DescriptorProtos.MessageOptions, Integer> msgIdExtension =
+                (GeneratedMessage.GeneratedExtension<DescriptorProtos.MessageOptions, Integer>) field.get(msgIdClass);
+
+        MsgInfoLoad load = new MsgInfoLoad(msgIdField, msgIdExtension);
+
         for (Class<?> protoClass : protoClasses) {
             ProtoMsgInfo.ProtoMsgInfoBuilder builder = ProtoMsgInfo.builder();
             AtomicInteger maxMsgId = new AtomicInteger();
-            new MsgInfoLoad(msgIdField).forEachMsg(protoClass, (msgId, msgDesc) -> {
+            load.forEachMsg(protoClass, (msgId, msgDesc) -> {
                 builder.msgIdAndName(msgId, msgDesc);
                 if (msgId > maxMsgId.get()) {
                     maxMsgId.set(msgId);

@@ -92,7 +92,7 @@ public class MsgCodeBuild {
             if (!config.getClassMatch().contains(protoMsgInfo.getClassName())) {
                 return;
             }
-            content.put("infoList", protoMsgInfo.getMsgIdAndNames().values().stream()
+            content.put("nameList", protoMsgInfo.getMsgIdAndNames().values().stream()
                     .map(MsgDesc::getName)
                     .filter(name -> name.endsWith(config.getMsgEndWith()))
                     .collect(Collectors.toList()));

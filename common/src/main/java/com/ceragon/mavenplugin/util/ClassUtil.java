@@ -38,7 +38,9 @@ public class ClassUtil {
         this.log = log;
         this.classLoader = getClassLoader(compilePath);
     }
-
+    public Class<?> loadClass(String className) throws ClassNotFoundException {
+        return this.classLoader.loadClass(className);
+    }
     public static ClassLoader getClassLoader(List<String> compilePath) throws MalformedURLException {
         // 转为 URL 数组
         URL[] urls = new URL[compilePath.size()];
