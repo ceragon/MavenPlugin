@@ -1,4 +1,4 @@
-package com.ceragon.mavenplugin.table.bean;
+package com.ceragon.mavenplugin.table.bean.config;
 
 import lombok.Data;
 
@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 将表格数据提取成Key，Value格式，且key不能重复
+ * 将表格数据提取成Key，map格式，且key不能重复
+ * 而map的key是一级列的名称
  */
 @Data
-public class TablePairConfig {
+public class KeyDataMapConfig {
     /**
      * vm模板文件目录
      */
@@ -19,13 +20,9 @@ public class TablePairConfig {
      */
     String targetFile;
     /**
-     * key所在的列的名字，只检索一级列
+     * key所在的列的名字，只检索第一级列
      */
     String keyColumn;
-    /**
-     * value所在的列的名字，只检索一级列
-     */
-    String valueColumn;
     /**
      * 文件全称匹配，只有以下名字才会处理
      */

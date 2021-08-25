@@ -1,9 +1,8 @@
 package com.ceragon.mavenplugin.table;
 
-import com.ceragon.mavenplugin.table.bean.TableConfig;
+import com.ceragon.mavenplugin.table.bean.config.TableConfig;
 import com.ceragon.mavenplugin.table.constant.ConfigContext;
 import com.ceragon.mavenplugin.table.language.LanguageService;
-import lombok.extern.slf4j.Slf4j;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -53,7 +52,7 @@ public class TableGeneratorMojo extends AbstractMojo {
             throw new MojoFailureException("can't find the tableConfig!Please create the tableConfig.yml in resource dir or set the tableConfigPath in pom.xml");
         }
 
-
+        tableConfig.getTablePairs().forEach();
 
         //配置velocity的资源加载路径
         ConfigContext context;
