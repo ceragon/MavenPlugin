@@ -9,7 +9,6 @@ import java.util.List;
 public class ProtoEachClassBuildConfig {
     private String vmFile;
     private String targetFile;
-    private PathType targetPathType = PathType.absolutePath;
     private String msgEndWith;
     private List<String> classMatch = new ArrayList<>();
 }

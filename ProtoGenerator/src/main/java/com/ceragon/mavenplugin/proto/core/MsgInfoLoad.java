@@ -43,7 +43,10 @@ public class MsgInfoLoad {
 
         Method method = methodOptional.get();
         FileDescriptor fileDescriptor = (FileDescriptor) method.invoke(protoClass);
-
+        String classPackage = fileDescriptor.getOptions().getJavaPackage();
+        if (!fileDescriptor.getOptions().getJavaMultipleFiles()){
+            classPackage += protoClass.getSimpleName();
+        }
         for (Descriptors.Descriptor descriptor : fileDescriptor.getMessageTypes()) {
             int msgId = descriptor.getOptions().getExtension(msgIdExtension);
             if (msgId == 0){
@@ -52,7 +55,7 @@ public class MsgInfoLoad {
             String name = descriptor.getName();
             consumer.accept(msgId, MsgDesc.builder()
                     .name(name)
-                    .fullName(protoClass.getName() + "." + name)
+                    .fullName(classPackage + "." + name)
                     .build());
         }
     }

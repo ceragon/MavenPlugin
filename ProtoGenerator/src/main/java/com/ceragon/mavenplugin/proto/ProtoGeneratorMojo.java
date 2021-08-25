@@ -56,7 +56,7 @@ public class ProtoGeneratorMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        log = getLog();
+        this.log = getLog();
         this.project = (MavenProject) getPluginContext().get("project");
         try {
             ClassUtil classUtil = new ClassUtil(log, compilePath);

@@ -6,5 +6,4 @@ import lombok.Data;
 public class ProtoAllMsgBuildConfig {
     private String vmFile;
     private String targetFile;
-    private PathType targetPathType = PathType.absolutePath;
 }
