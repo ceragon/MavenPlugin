@@ -1,6 +1,8 @@
 package com.ceragon.mavenplugin.table;
 
+import com.ceragon.mavenplugin.table.bean.TableData;
 import com.ceragon.mavenplugin.table.bean.config.TableConfig;
+import com.ceragon.mavenplugin.table.build.KeyDataMapBuild;
 import com.ceragon.mavenplugin.table.constant.ConfigContext;
 import com.ceragon.mavenplugin.table.language.LanguageService;
 
@@ -21,6 +23,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Mojo(
@@ -52,7 +58,11 @@ public class TableGeneratorMojo extends AbstractMojo {
             throw new MojoFailureException("can't find the tableConfig!Please create the tableConfig.yml in resource dir or set the tableConfigPath in pom.xml");
         }
 
-        tableConfig.getTablePairs().forEach();
+        List<TableData> allTableDatas = loadTableDatas();
+
+        String resourceRoot = this.project.getBuild().getOutputDirectory();
+        KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, resourceRoot, );
+        tableConfig.getEachTableKeyDataMap().forEach();
 
         //配置velocity的资源加载路径
         ConfigContext context;
@@ -68,6 +78,7 @@ public class TableGeneratorMojo extends AbstractMojo {
         log.info("generate finish!");
     }
 
+
     private TableConfig loadTableConfig() {
         String sourceRoot = project.getBuild().getOutputDirectory();
         File sourceFile = new File(sourceRoot + File.separator + tableConfigPath);
@@ -80,6 +91,11 @@ public class TableGeneratorMojo extends AbstractMojo {
         } catch (FileNotFoundException e) {
             log.error(e.getMessage(), e);
         }
+        return null;
+    }
+
+    private List<TableData> loadTableDatas() {
+
         return null;
     }
 

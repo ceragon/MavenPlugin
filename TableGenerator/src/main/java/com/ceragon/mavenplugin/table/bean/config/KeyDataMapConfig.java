@@ -1,5 +1,6 @@
 package com.ceragon.mavenplugin.table.bean.config;
 
+import com.ceragon.mavenplugin.constant.BaseTypeEnum;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -23,6 +24,10 @@ public class KeyDataMapConfig {
      * key所在的列的名字，只检索第一级列
      */
     String keyColumn;
+    /**
+     * key所在的列，对应的字段类型
+     */
+    BaseTypeEnum keyColumnType;
     /**
      * 文件全称匹配，只有以下名字才会处理
      */
