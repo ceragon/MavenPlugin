@@ -13,6 +13,7 @@
         <module>RPCGenerator</module>
         <module>common</module>
         <module>ProtoGenerator</module>
+        <module>TableUtil</module>
     </modules>
 
     <properties>

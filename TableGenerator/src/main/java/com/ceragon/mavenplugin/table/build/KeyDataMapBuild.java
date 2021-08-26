@@ -6,17 +6,11 @@ import com.ceragon.mavenplugin.table.exception.TableException;
 import com.ceragon.mavenplugin.util.CodeGenTool;
 import com.ceragon.mavenplugin.util.PathFormat;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.maven.project.MavenProject;
-
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class KeyDataMapBuild {

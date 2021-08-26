@@ -16,17 +16,17 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import com.ceragon.mavenplugin.table.load.LoadTableData;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Mojo(
@@ -36,7 +36,8 @@ import java.util.function.Function;
         threadSafe = true
 )
 public class TableGeneratorMojo extends AbstractMojo {
-
+    @Parameter(property = "loadScriptFile", required = true, readonly = true)
+    private File loadScriptFile;
     @Parameter(property = "tableSourceRoot", defaultValue = "${project.basedir}/src/main/resources", readonly = true)
     private File tableSourceDir;
 
@@ -47,6 +48,7 @@ public class TableGeneratorMojo extends AbstractMojo {
     public String tableConfigPath;
     private Log log;
     private MavenProject project;
+    public static ThreadLocal<List<Exception>> exceptions = ThreadLocal.withInitial(ArrayList::new);
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -57,12 +59,16 @@ public class TableGeneratorMojo extends AbstractMojo {
         if (tableConfig == null) {
             throw new MojoFailureException("can't find the tableConfig!Please create the tableConfig.yml in resource dir or set the tableConfigPath in pom.xml");
         }
-
-        List<TableData> allTableDatas = loadTableDatas();
+        List<TableData> allTableDatas;
+        try {
+            allTableDatas = new LoadTableData(loadScriptFile).loadTableData();
+        } catch (Throwable e) {
+            throw new MojoFailureException("load table failed", e);
+        }
 
         String resourceRoot = this.project.getBuild().getOutputDirectory();
-        KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, resourceRoot, );
-        tableConfig.getEachTableKeyDataMap().forEach();
+        KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, resourceRoot, allTableDatas);
+        tableConfig.getEachTableKeyDataMap().forEach(keyDataMapBuild::processAllTable);
 
         //配置velocity的资源加载路径
         ConfigContext context;
