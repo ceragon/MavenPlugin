@@ -17,7 +17,8 @@ public class LoadTableData {
             return Collections.emptyList();
         }
         ILoadLogic loadLogic = ILoadLogic.LogicType.getLogic(loadScriptFile);
-        Environment environment = new Environment();
+        Environment environment = Environment.builder()
+                .log();
         return loadLogic.execute(loadScriptFile, environment);
     }
 

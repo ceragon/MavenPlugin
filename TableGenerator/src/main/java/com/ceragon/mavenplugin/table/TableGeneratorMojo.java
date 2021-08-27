@@ -36,6 +36,8 @@ import java.util.function.Function;
         threadSafe = true
 )
 public class TableGeneratorMojo extends AbstractMojo {
+    @Parameter(property = "loadScriptClass", required = true, readonly = true)
+    private String loadScriptClass;
     @Parameter(property = "loadScriptFile", required = true, readonly = true)
     private File loadScriptFile;
     @Parameter(property = "tableSourceRoot", defaultValue = "${project.basedir}/src/main/resources", readonly = true)
@@ -59,6 +61,8 @@ public class TableGeneratorMojo extends AbstractMojo {
         if (tableConfig == null) {
             throw new MojoFailureException("can't find the tableConfig!Please create the tableConfig.yml in resource dir or set the tableConfigPath in pom.xml");
         }
+        ConfigContext context = ConfigContext.builder()
+                .log(log).build();
         List<TableData> allTableDatas;
         try {
             allTableDatas = new LoadTableData(loadScriptFile).loadTableData();
@@ -70,18 +74,18 @@ public class TableGeneratorMojo extends AbstractMojo {
         KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, resourceRoot, allTableDatas);
         tableConfig.getEachTableKeyDataMap().forEach(keyDataMapBuild::processAllTable);
 
-        //配置velocity的资源加载路径
-        ConfigContext context;
-        try {
-            context = new ConfigContext(tableSourceDir, outputDirectory, log);
-        } catch (Throwable e) {
-            throw new MojoFailureException("init config failed", e);
-        }
-        log.info("config init ok!");
-        generate(context.getLangFilePath(),
-                (yamlData) -> LanguageService.getInstance().generate(yamlData, context));
-        log.info("generate lang file ok!");
-        log.info("generate finish!");
+//        //配置velocity的资源加载路径
+//        ConfigContext context;
+//        try {
+//            context = new ConfigContext(tableSourceDir, outputDirectory, log);
+//        } catch (Throwable e) {
+//            throw new MojoFailureException("init config failed", e);
+//        }
+//        log.info("config init ok!");
+//        generate(context.getLangFilePath(),
+//                (yamlData) -> LanguageService.getInstance().generate(yamlData, context));
+//        log.info("generate lang file ok!");
+//        log.info("generate finish!");
     }
 
 

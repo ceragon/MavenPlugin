@@ -1,5 +1,6 @@
 package com.ceragon.mavenplugin.table.constant;
 
+import lombok.Builder;
 import lombok.Data;
 import org.apache.maven.plugin.logging.Log;
 
@@ -8,7 +9,13 @@ import java.io.IOException;
 import java.util.Properties;
 
 @Data
+@Builder
 public class ConfigContext {
+
+
+
+
+
     private final static String LANGUAGE_NAME = "language.yml";
     private final Log log;
     private final File tableSourceDir;
