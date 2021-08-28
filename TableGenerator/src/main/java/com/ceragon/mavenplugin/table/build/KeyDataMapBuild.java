@@ -7,7 +7,9 @@ import com.ceragon.mavenplugin.util.CodeGenTool;
 import com.ceragon.mavenplugin.util.PathFormat;
 
 import org.apache.maven.project.MavenProject;
+
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,42 +30,50 @@ public class KeyDataMapBuild {
     }
 
     public void processAllTable(KeyDataMapConfig config) {
-        String sourceName = config.getVmFile();
         Map<String, TableData> tableDataMap = allTableDatas.stream()
                 .filter(tableData -> config.getFileNameMatch().contains(tableData.getTableName()))
                 .collect(Collectors.toMap(TableData::getTableName, tableData -> tableData));
 
-        tableDataMap.forEach((tableName, tableData) -> {
-            Map<String, Object> content = new HashMap<>();
+        tableDataMap.forEach((tableName, tableData) -> processOneTable(tableName, tableData, config));
+    }
 
-            boolean hasError = tableData.getCellDatas().stream().anyMatch(stringObjectMap -> {
-                Object keyValue = stringObjectMap.get(config.getKeyColumn());
-                if (keyValue == null) {
-                    exceptions.add(new TableException(tableName, stringObjectMap, "the {} is null", config.getKeyColumn()));
-                    return true;
-                }
-                if (!config.getKeyColumnType().checkMatch(keyValue)) {
-                    exceptions.add(new TableException(tableName, stringObjectMap, "the {} is wrong type", config.getKeyColumn()));
-                    return true;
-                }
-                String keyValueStr = keyValue.toString();
-                if (content.containsKey(keyValueStr)) {
-                    exceptions.add(new TableException(tableName, stringObjectMap, "the {} is repeat,value={}",
-                            config.getKeyColumn(), keyValue));
-                    return true;
-                }
-                content.put(keyValueStr, stringObjectMap);
-                return false;
-            });
-            if (hasError) {
-                return;
-            }
-            try {
-                String destPath = pathFormat.format(config.getTargetFile(), "tableName", tableName);
-                CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, true, content);
-            } catch (IOException e) {
-                exceptions.add(e);
-            }
-        });
+    private void processOneTable(String tableName, TableData tableData, KeyDataMapConfig config) {
+        String sourceName = config.getVmFile();
+        Map<String, Object> content = new HashMap<>();
+
+        if (tableData.getCellDatas().stream()
+                .anyMatch(data -> checkErrorAndBuildContent(data, tableName, config, content))) {
+            // 有错误，停止
+            return;
+        }
+        try {
+            String destPath = pathFormat.format(config.getTargetFile(), "tableName", tableName);
+
+            CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, true,
+                    Map.of("infoList", content));
+        } catch (IOException e) {
+            exceptions.add(e);
+        }
+    }
+
+    private boolean checkErrorAndBuildContent(Map<String, Object> cellData, String tableName,
+                                              KeyDataMapConfig config, Map<String, Object> content) {
+        Object keyValue = cellData.get(config.getKeyColumn());
+        if (keyValue == null) {
+            exceptions.add(new TableException(tableName, cellData, "the {} is null", config.getKeyColumn()));
+            return true;
+        }
+        if (!config.getKeyColumnType().checkMatch(keyValue)) {
+            exceptions.add(new TableException(tableName, cellData, "the {} is wrong type", config.getKeyColumn()));
+            return true;
+        }
+        String keyValueStr = keyValue.toString();
+        if (content.containsKey(keyValueStr)) {
+            exceptions.add(new TableException(tableName, cellData, "the {} is repeat,value={}",
+                    config.getKeyColumn(), keyValue));
+            return true;
+        }
+        content.put(keyValueStr, cellData);
+        return false;
     }
 }

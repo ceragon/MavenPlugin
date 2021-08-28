@@ -8,6 +8,5 @@ import org.apache.maven.plugin.logging.Log;
 @Builder
 public class Environment {
     public final static String ENV = "env";
-    Log log;
     String sourceDir;
 }

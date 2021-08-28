@@ -2,17 +2,24 @@ package com.ceragon.mavenplugin.table.load;
 
 import com.ceragon.mavenplugin.table.bean.Environment;
 import com.ceragon.mavenplugin.table.bean.TableData;
+import com.ceragon.mavenplugin.table.constant.ConfigContext;
 import com.ceragon.mavenplugin.table.load.logic.GroovyLoadLogic;
+import com.ceragon.mavenplugin.table.load.logic.JavaLoadLogic;
 
 import javax.naming.OperationNotSupportedException;
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.List;
 
 public interface ILoadLogic {
-    List<TableData> execute(File loadScriptFile, Environment environment) throws Exception;
+    List<TableData> execute(ConfigContext context, Environment environment) throws Exception;
 
     enum LogicType {
+        java(".java") {
+            @Override
+            ILoadLogic instance() throws OperationNotSupportedException {
+                return new JavaLoadLogic();
+            }
+        },
         groovy(".groovy") {
             @Override
             ILoadLogic instance() {

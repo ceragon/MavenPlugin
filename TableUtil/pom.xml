@@ -11,4 +11,12 @@
 
     <artifactId>table-util</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.ceragon.mavenplugin</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
 </project>

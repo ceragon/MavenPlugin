@@ -4,7 +4,6 @@ import com.ceragon.mavenplugin.table.bean.TableData;
 import com.ceragon.mavenplugin.table.bean.config.TableConfig;
 import com.ceragon.mavenplugin.table.build.KeyDataMapBuild;
 import com.ceragon.mavenplugin.table.constant.ConfigContext;
-import com.ceragon.mavenplugin.table.language.LanguageService;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -19,7 +18,6 @@ import org.apache.maven.project.MavenProject;
 import com.ceragon.mavenplugin.table.load.LoadTableData;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,94 +34,58 @@ import java.util.function.Function;
         threadSafe = true
 )
 public class TableGeneratorMojo extends AbstractMojo {
-    @Parameter(property = "loadScriptClass", required = true, readonly = true)
-    private String loadScriptClass;
-    @Parameter(property = "loadScriptFile", required = true, readonly = true)
-    private File loadScriptFile;
+    @Parameter(property = "loadScriptClass", readonly = true)
+    String loadScriptClass;
+    @Parameter(property = "loadScriptFile", readonly = true)
+    File loadScriptFile;
     @Parameter(property = "tableSourceRoot", defaultValue = "${project.basedir}/src/main/resources", readonly = true)
-    private File tableSourceDir;
-
-    @Parameter(property = "outputDirectory", required = true, readonly = true)
-    private File outputDirectory;
-
-    @Parameter(property = "tableConfigPath", defaultValue = "tableConfig.yml", readonly = true)
-    public String tableConfigPath;
+    String tableSourceDir;
+    @Parameter(property = "tableConfigFile", defaultValue = "tableConfig.yml", readonly = true)
+    File tableConfigFile;
     private Log log;
-    private MavenProject project;
     public static ThreadLocal<List<Exception>> exceptions = ThreadLocal.withInitial(ArrayList::new);
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         this.log = getLog();
-        this.project = (MavenProject) getPluginContext().get("project");
+        MavenProject project = (MavenProject) getPluginContext().get("project");
         log.info("Generating");
         TableConfig tableConfig = loadTableConfig();
         if (tableConfig == null) {
             throw new MojoFailureException("can't find the tableConfig!Please create the tableConfig.yml in resource dir or set the tableConfigPath in pom.xml");
         }
         ConfigContext context = ConfigContext.builder()
-                .log(log).build();
+                .log(log)
+                .project(project)
+                .loadScriptClass(loadScriptClass)
+                .loadScriptFile(loadScriptFile)
+                .tableSourceDir(tableSourceDir)
+                .build();
         List<TableData> allTableDatas;
         try {
-            allTableDatas = new LoadTableData(loadScriptFile).loadTableData();
+            allTableDatas = new LoadTableData(context).loadTableData();
         } catch (Throwable e) {
             throw new MojoFailureException("load table failed", e);
         }
 
-        String resourceRoot = this.project.getBuild().getOutputDirectory();
+        String resourceRoot = project.getBuild().getOutputDirectory();
         KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, resourceRoot, allTableDatas);
         tableConfig.getEachTableKeyDataMap().forEach(keyDataMapBuild::processAllTable);
-
-//        //配置velocity的资源加载路径
-//        ConfigContext context;
-//        try {
-//            context = new ConfigContext(tableSourceDir, outputDirectory, log);
-//        } catch (Throwable e) {
-//            throw new MojoFailureException("init config failed", e);
-//        }
-//        log.info("config init ok!");
-//        generate(context.getLangFilePath(),
-//                (yamlData) -> LanguageService.getInstance().generate(yamlData, context));
-//        log.info("generate lang file ok!");
-//        log.info("generate finish!");
     }
 
 
     private TableConfig loadTableConfig() {
-        String sourceRoot = project.getBuild().getOutputDirectory();
-        File sourceFile = new File(sourceRoot + File.separator + tableConfigPath);
-        if (!sourceFile.exists()) {
+        if (!this.tableConfigFile.exists()) {
+            log.error("the config file is not exist!");
             return null;
         }
         Yaml yaml = new Yaml();
         try {
-            return yaml.loadAs(new FileReader(sourceFile), TableConfig.class);
+            return yaml.loadAs(new FileReader(this.tableConfigFile), TableConfig.class);
         } catch (FileNotFoundException e) {
             log.error(e.getMessage(), e);
         }
         return null;
-    }
-
-    private List<TableData> loadTableDatas() {
-
-        return null;
-    }
-
-    private void generate(String path, Function<Object, Boolean> consumer) throws MojoFailureException {
-        File file = new File(path);
-        if (file.exists()) {
-            Yaml yaml = new Yaml();
-            try (FileInputStream fis = new FileInputStream(file)) {
-                Object yamlData = yaml.load(fis);
-                if (!consumer.apply(yamlData)) {
-                    throw new MojoFailureException(String.format("generate file %s failed", path));
-                }
-            } catch (FileNotFoundException e) {
-                throw new MojoFailureException("the language file is not found!", e);
-            } catch (IOException e) {
-                throw new MojoFailureException("the language file is can't read!", e);
-            }
-        }
     }
 
 }
