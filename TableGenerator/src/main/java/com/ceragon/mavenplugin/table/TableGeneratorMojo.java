@@ -68,8 +68,7 @@ public class TableGeneratorMojo extends AbstractMojo {
             throw new MojoFailureException("load table failed", e);
         }
 
-        String resourceRoot = project.getBuild().getOutputDirectory();
-        KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, resourceRoot, allTableDatas);
+        KeyDataMapBuild keyDataMapBuild = new KeyDataMapBuild(project, allTableDatas);
         tableConfig.getEachTableKeyDataMap().forEach(keyDataMapBuild::processAllTable);
     }
 
