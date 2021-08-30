@@ -1,11 +1,21 @@
 package com.ceragon.mavenplugin.proto;
 
 import com.ceragon.mavenplugin.proto.bean.ErrorMsg;
+import com.ceragon.mavenplugin.proto.bean.OutputTarget;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
 import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.core.MsgCodeBuild;
 import com.ceragon.mavenplugin.proto.core.MsgInfoLoad;
+import com.ceragon.mavenplugin.proto.core.ProtocBuild;
 import com.ceragon.mavenplugin.util.ClassUtil;
+import com.ceragon.mavenplugin.util.StringUtils;
+import com.github.os72.protocjar.Protoc;
+import com.github.os72.protocjar.ProtocVersion;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.sonatype.plexus.build.incremental.BuildContext;
+import org.sonatype.plexus.build.incremental.ThreadBuildContext;
 import org.yaml.snakeyaml.Yaml;
 
 import com.google.protobuf.DescriptorProtos;
@@ -20,14 +30,17 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,8 +52,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Mojo(name = "generator", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.COMPILE)
 public class ProtoGeneratorMojo extends AbstractMojo {
-    @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
-    public List<String> compilePath;
+//    @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
+//    public List<String> compilePath;
+
+    @Parameter(property = "protocVersion", readonly = true)
+    private String protocVersion;
+    @Parameter(property = "inputDirectories", readonly = true)
+    private File[] inputDirectories;
+    @Parameter(property = "outputTargets", readonly = true)
+    private OutputTarget[] outputTargets;
+
     @Parameter(property = "protoPackage", required = true, readonly = true)
     public String protoPackage;
     @Parameter(property = "msgIdClass", required = true, readonly = true)
@@ -50,7 +71,7 @@ public class ProtoGeneratorMojo extends AbstractMojo {
 
     @Parameter(property = "protoConfigPath", defaultValue = "protoConfig.yml", readonly = true)
     public String protoConfigPath;
-
+    private BuildContext context;
     private Log log;
     private MavenProject project;
 
@@ -58,6 +79,24 @@ public class ProtoGeneratorMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         this.log = getLog();
         this.project = (MavenProject) getPluginContext().get("project");
+        this.context = ThreadBuildContext.getContext();
+        if (outputTargets == null) {
+            outputTargets = new OutputTarget[1];
+        }else {
+            outputTargets = new OutputTarget[outputTargets.length + 1];
+            Arrays.
+        }
+
+        ProtocBuild.builder().log(log).project(project).protocVersion(protocVersion).inputDirectories(inputDirectories)
+                .includeStdTypes(true).outputTargets(outputTargets).includeImports(true)
+                .buildContext(context).build().process();
+
+        List<String> compilePath = null;
+        try {
+            compilePath = project.getCompileClasspathElements();
+        } catch (DependencyResolutionRequiredException e) {
+            throw new MojoFailureException("the compile path is wrong!" + e.getMessage(), e);
+        }
         try {
             ClassUtil classUtil = new ClassUtil(log, compilePath);
             Set<Class<?>> protoClasses = classUtil.scan(protoPackage, null);
