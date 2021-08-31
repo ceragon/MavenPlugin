@@ -80,16 +80,13 @@ public class ProtoGeneratorMojo extends AbstractMojo {
         this.log = getLog();
         this.project = (MavenProject) getPluginContext().get("project");
         this.context = ThreadBuildContext.getContext();
-        if (outputTargets == null) {
-            outputTargets = new OutputTarget[1];
-        }else {
-            outputTargets = new OutputTarget[outputTargets.length + 1];
-            Arrays.
+        System.setProperty("os.arch","x86_64");
+        if (outputTargets != null){
+            ProtocBuild.builder().log(log).project(project).protocVersion(protocVersion).inputDirectories(inputDirectories)
+                    .includeStdTypes(true).outputTargets(outputTargets).includeImports(true)
+                    .buildContext(context).build().process();
         }
 
-        ProtocBuild.builder().log(log).project(project).protocVersion(protocVersion).inputDirectories(inputDirectories)
-                .includeStdTypes(true).outputTargets(outputTargets).includeImports(true)
-                .buildContext(context).build().process();
 
         List<String> compilePath = null;
         try {
