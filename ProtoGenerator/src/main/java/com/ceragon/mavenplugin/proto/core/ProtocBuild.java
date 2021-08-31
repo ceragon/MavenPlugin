@@ -1,6 +1,8 @@
 package com.ceragon.mavenplugin.proto.core;
 
 import com.ceragon.mavenplugin.proto.bean.OutputTarget;
+import com.ceragon.mavenplugin.proto.core.protoc.CommandUtil;
+import com.ceragon.mavenplugin.proto.core.protoc.OutputTargetUtil;
 import com.ceragon.mavenplugin.util.FileFilter;
 import com.ceragon.mavenplugin.util.StringUtils;
 import com.github.os72.protocjar.Protoc;
@@ -40,32 +42,21 @@ public class ProtocBuild {
     File[] inputDirectories;
     File[] includeDirectories;
     boolean includeStdTypes;
-    OutputTarget[] outputTargets;
     boolean includeImports;
     BuildContext buildContext;
     private final static String extension = ".proto";
     private final static String includeMavenTypes = "transitive";
     private String protocCommand;
 
-    public void process() throws MojoExecutionException {
-        for (OutputTarget target : outputTargets) {
-            target.setAddSources(target.getAddSources().toLowerCase().trim());
-            if ("true".equals(target.getAddSources())) target.setAddSources("main");
+    public void process(OutputTarget... outputTargets) throws MojoExecutionException {
+        // 初始化outputTarget
+        Arrays.stream(outputTargets).forEach(outputTarget -> OutputTargetUtil.initTarget(project, outputTarget));
+        // 默认值
+        if (StringUtils.isEmpty(protocVersion)) protocVersion = ProtocVersion.PROTOC_VERSION.mVersion;
+        // 封装protoc的程序完整路径
+        protocCommand = CommandUtil.buildProtocExe(log, protocVersion);
 
-            if (target.getOutputDirectory() == null) {
-                String subdir = "generated-" + ("test".equals(target.getAddSources()) ? "test-" : "") + "sources";
-                target.setOutputDirectory(new File(project.getBuild().getDirectory() + File.separator + subdir + File.separator));
-            }
-
-            if (target.getOutputDirectorySuffix() != null) {
-                target.setOutputDirectory(new File(target.getOutputDirectory(), target.getOutputDirectorySuffix()));
-            }
-        }
-
-        protocCommand = prepareProtoc();
         File tmpDir = createTempDir("protocjar");
-
-
         if (includeStdTypes || hasIncludeMavenTypes()) {
             try {
                 File extraTypeDir = new File(tmpDir, "include");
@@ -97,28 +88,6 @@ public class ProtocBuild {
             if (f.isDirectory()) deleteOnExitRecursive(f);
         }
     }
-
-    private String prepareProtoc() throws MojoExecutionException {
-        if (StringUtils.isEmpty(protocVersion)) protocVersion = ProtocVersion.PROTOC_VERSION.mVersion;
-        log.info("Protoc version: " + protocVersion);
-        String protocCommand;
-        try {
-            File protocFile = Protoc.extractProtoc(ProtocVersion.getVersion("-v" + protocVersion), false);
-            protocCommand = protocFile.getAbsolutePath();
-            try {
-                // some linuxes don't allow exec in /tmp, try one dummy execution, switch to user home if it fails
-                Protoc.runProtoc(protocCommand, new String[]{"--version"});
-            } catch (Exception e) {
-                File tempRoot = new File(System.getProperty("user.home"));
-                protocFile = Protoc.extractProtoc(ProtocVersion.getVersion("-v" + protocVersion), false, tempRoot);
-                protocCommand = protocFile.getAbsolutePath();
-            }
-        } catch (IOException e) {
-            throw new MojoExecutionException("Error extracting protoc for version " + protocVersion, e);
-        }
-        return protocCommand;
-    }
-
 
     static File createTempDir(String name) throws MojoExecutionException {
         try {

@@ -80,13 +80,13 @@ public class ProtoGeneratorMojo extends AbstractMojo {
         this.log = getLog();
         this.project = (MavenProject) getPluginContext().get("project");
         this.context = ThreadBuildContext.getContext();
-        System.setProperty("os.arch","x86_64");
-        if (outputTargets != null){
-            ProtocBuild.builder().log(log).project(project).protocVersion(protocVersion).inputDirectories(inputDirectories)
-                    .includeStdTypes(true).outputTargets(outputTargets).includeImports(true)
-                    .buildContext(context).build().process();
+        prepareExecute();
+        ProtocBuild protocBuild = ProtocBuild.builder().log(log).project(project).protocVersion(protocVersion)
+                .inputDirectories(inputDirectories).includeStdTypes(true).includeImports(true)
+                .buildContext(context).build();
+        if (outputTargets != null) {
+            protocBuild.process(outputTargets);
         }
-
 
         List<String> compilePath = null;
         try {
@@ -119,6 +119,14 @@ public class ProtoGeneratorMojo extends AbstractMojo {
         } catch (MalformedURLException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
             log.error(e.getMessage(), e);
             throw new MojoFailureException(e.getMessage(), e);
+        }
+    }
+
+    private void prepareExecute() {
+        if ("Mac OS X".equals(System.getProperty("os.name"))
+                && "aarch64".equals(System.getProperty("os.arch"))) {
+            // 苹果m1电脑，改为x86_64 架构
+            System.setProperty("os.arch", "x86_64");
         }
     }
 
