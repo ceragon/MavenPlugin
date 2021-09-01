@@ -28,5 +28,6 @@
             <artifactId>protoc-jar</artifactId>
             <version>3.11.4</version>
         </dependency>
+
     </dependencies>
 </project>

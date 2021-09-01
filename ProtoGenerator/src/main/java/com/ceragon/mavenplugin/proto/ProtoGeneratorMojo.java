@@ -4,43 +4,37 @@ import com.ceragon.mavenplugin.proto.bean.ErrorMsg;
 import com.ceragon.mavenplugin.proto.bean.OutputTarget;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
 import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
+import com.ceragon.mavenplugin.proto.constant.ContextKey;
 import com.ceragon.mavenplugin.proto.core.MsgCodeBuild;
 import com.ceragon.mavenplugin.proto.core.MsgInfoLoad;
 import com.ceragon.mavenplugin.proto.core.ProtocBuild;
 import com.ceragon.mavenplugin.util.ClassUtil;
-import com.ceragon.mavenplugin.util.StringUtils;
-import com.github.os72.protocjar.Protoc;
-import com.github.os72.protocjar.ProtocVersion;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
-import org.sonatype.plexus.build.incremental.BuildContext;
-import org.sonatype.plexus.build.incremental.ThreadBuildContext;
-import org.yaml.snakeyaml.Yaml;
-
+import com.ceragon.mavenplugin.util.MavenBuildContext;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.GeneratedMessage;
-
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.sonatype.plexus.build.incremental.BuildContext;
+import org.sonatype.plexus.build.incremental.ThreadBuildContext;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,7 +65,7 @@ public class ProtoGeneratorMojo extends AbstractMojo {
 
     @Parameter(property = "protoConfigPath", defaultValue = "protoConfig.yml", readonly = true)
     public String protoConfigPath;
-    private BuildContext context;
+
     private Log log;
     private MavenProject project;
 
@@ -79,14 +73,19 @@ public class ProtoGeneratorMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         this.log = getLog();
         this.project = (MavenProject) getPluginContext().get("project");
-        this.context = ThreadBuildContext.getContext();
+        BuildContext context = new MavenBuildContext();
+        context.setValue(ContextKey.LOG, log);
+        context.setValue(ContextKey.PROJECT, project);
+        ThreadBuildContext.setThreadBuildContext(context);
         prepareExecute();
-        ProtocBuild protocBuild = ProtocBuild.builder().log(log).project(project).protocVersion(protocVersion)
+        ProtocBuild protocBuild = ProtocBuild.builder().protocVersion(protocVersion)
                 .inputDirectories(inputDirectories).includeStdTypes(true).includeImports(true)
-                .buildContext(context).build();
-        if (outputTargets != null) {
-            protocBuild.process(outputTargets);
-        }
+                .build();
+        List<OutputTarget> outputTargets = new ArrayList<>(Arrays.asList(this.outputTargets));
+        OutputTarget descriptorTarget = new OutputTarget();
+        descriptorTarget.setType("descriptor");
+        outputTargets.add(descriptorTarget);
+        protocBuild.process(outputTargets);
 
         List<String> compilePath = null;
         try {
