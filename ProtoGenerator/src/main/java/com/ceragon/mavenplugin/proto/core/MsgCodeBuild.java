@@ -1,94 +1,51 @@
 package com.ceragon.mavenplugin.proto.core;
 
-import com.ceragon.mavenplugin.proto.bean.MsgDesc;
-import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
 import com.ceragon.mavenplugin.proto.bean.config.ProtoAllMsgBuildConfig;
-import com.ceragon.mavenplugin.proto.bean.config.ProtoEachClassBuildConfig;
-import com.ceragon.mavenplugin.proto.bean.config.ProtoEachMsgBuildConfig;
+import com.ceragon.mavenplugin.proto.bean.proto.ProtoFileDescPojo;
+import com.ceragon.mavenplugin.proto.bean.proto.ProtoMessageDescPojo;
+import com.ceragon.mavenplugin.proto.constant.ContextKey;
 import com.ceragon.mavenplugin.util.CodeGenTool;
 import com.ceragon.mavenplugin.util.PathFormat;
-
+import lombok.Value;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.sonatype.plexus.build.incremental.BuildContext;
+import org.sonatype.plexus.build.incremental.ThreadBuildContext;
+
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 
+@Value
 public class MsgCodeBuild {
-    MavenProject project;
-    String resourceRoot;
-    List<ProtoMsgInfo> allProtoMsgInfos;
-    Map<String, Object> content;
-    List<Exception> exceptions;
+    List<ProtoFileDescPojo> protoFileDescPojoList;
     PathFormat pathFormat;
 
-    public MsgCodeBuild(MavenProject project, String resourceRoot, List<ProtoMsgInfo> allProtoMsgInfos, Map<String, Object> content, List<Exception> exceptions) {
-        this.project = project;
-        this.resourceRoot = resourceRoot;
-        this.allProtoMsgInfos = allProtoMsgInfos;
-        this.content = content;
-        this.exceptions = exceptions;
-        this.pathFormat = new PathFormat(project);
+    public boolean buildAllMsgCode(ProtoAllMsgBuildConfig[] configList) {
+        BuildContext context = ThreadBuildContext.getContext();
+        Log log = (Log) context.getValue(ContextKey.LOG);
+        MavenProject project = (MavenProject) context.getValue(ContextKey.PROJECT);
+        String resourceRoot = project.getBuild().getResources().get(0).getDirectory();
+        Map<String, Object> content = new HashMap<>();
+        List<ProtoMessageDescPojo> messageDescPojoList = protoFileDescPojoList.stream().flatMap(pojo -> pojo.getMessageDescList().stream())
+                .collect(Collectors.toList());
+        content.put("infoList", messageDescPojoList);
+        return Arrays.stream(configList).allMatch(config -> buildAllMsgCodeOne(log, resourceRoot, config, content));
     }
 
-    public void setContent(Map<String, Object> content) {
-        this.content = content;
-    }
-
-    public void processAllMsg(ProtoAllMsgBuildConfig config) {
+    private boolean buildAllMsgCodeOne(Log log, String resourceRoot, ProtoAllMsgBuildConfig config, Map<String, Object> content) {
         String sourceName = config.getVmFile();
         String destPath = pathFormat.format(config.getTargetFile());
         try {
             CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, true, content);
+            return true;
         } catch (IOException e) {
-            exceptions.add(e);
+            log.error(e.getMessage(), e);
+            return false;
         }
-    }
-
-    public void processEachMsg(ProtoEachMsgBuildConfig config) {
-        String sourceName = config.getVmFile();
-        this.allProtoMsgInfos.forEach(protoMsgInfo -> {
-            // 检查是否匹配
-            if (!config.getClassMatch().contains(protoMsgInfo.getClassName())) {
-                return;
-            }
-            protoMsgInfo.getMsgIdAndNames().forEach((msgId, desc) -> {
-                if (!desc.getName().endsWith(config.getMsgEndWith())) {
-                    return;
-                }
-                content.put("name", desc.getName());
-                content.put("fullName", desc.getFullName());
-                try {
-                    String destPath = pathFormat.format(config.getTargetFile(), "MsgName", desc.getName());
-                    CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, false, content);
-                } catch (IOException e) {
-                    exceptions.add(e);
-                }
-            });
-
-        });
-
-    }
-
-
-    public void processEachClass(ProtoEachClassBuildConfig config) {
-        String sourceName = config.getVmFile();
-        String destPath = pathFormat.format(config.getTargetFile());
-        this.allProtoMsgInfos.forEach(protoMsgInfo -> {
-            // 检查是否匹配
-            if (!config.getClassMatch().contains(protoMsgInfo.getClassName())) {
-                return;
-            }
-            content.put("nameList", protoMsgInfo.getMsgIdAndNames().values().stream()
-                    .map(MsgDesc::getName)
-                    .filter(name -> name.endsWith(config.getMsgEndWith()))
-                    .collect(Collectors.toList()));
-            try {
-                CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, true, content);
-            } catch (IOException e) {
-                exceptions.add(e);
-            }
-        });
     }
 }
