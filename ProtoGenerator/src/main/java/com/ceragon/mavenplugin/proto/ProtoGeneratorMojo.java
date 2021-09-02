@@ -5,6 +5,7 @@ import com.ceragon.mavenplugin.proto.bean.OutputTarget;
 import com.ceragon.mavenplugin.proto.bean.ProtoMsgInfo;
 import com.ceragon.mavenplugin.proto.bean.config.ProtoConfig;
 import com.ceragon.mavenplugin.proto.constant.ContextKey;
+import com.ceragon.mavenplugin.proto.core.DescriptorLoader;
 import com.ceragon.mavenplugin.proto.core.MsgCodeBuild;
 import com.ceragon.mavenplugin.proto.core.MsgInfoLoad;
 import com.ceragon.mavenplugin.proto.core.ProtocBuild;
@@ -86,6 +87,8 @@ public class ProtoGeneratorMojo extends AbstractMojo {
         descriptorTarget.setType("descriptor");
         outputTargets.add(descriptorTarget);
         protocBuild.process(outputTargets);
+
+        DescriptorLoader.loadDesc(descriptorTarget.getOutputDirectory());
 
         List<String> compilePath = null;
         try {
