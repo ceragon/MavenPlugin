@@ -30,8 +30,6 @@ import java.util.List;
 
 @Mojo(name = "generator", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class ProtoGeneratorMojo extends AbstractMojo {
-//    @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
-//    public List<String> compilePath;
 
     @Parameter(property = "protocVersion", readonly = true)
     private String protocVersion;
@@ -40,23 +38,12 @@ public class ProtoGeneratorMojo extends AbstractMojo {
     @Parameter(property = "outputTargets", readonly = true)
     private OutputTarget[] outputTargets;
 
-    //    @Parameter(property = "protoPackage", required = true, readonly = true)
-    //    public String protoPackage;
     @Parameter(property = "totalMsg", readonly = true)
     private ProtoAllMsgBuildConfig[] totalMsg;
     @Parameter(property = "everyMsg", readonly = true)
     private ProtoEachMsgBuildConfig[] everyMsg;
     @Parameter(property = "everyProtoFile", readonly = true)
     private ProtoEachClassBuildConfig[] everyProtoFile;
-
-
-//    @Parameter(property = "msgIdClass", required = true, readonly = true)
-//    public String msgIdClass;
-//    @Parameter(property = "msgIdField", defaultValue = "msgId", readonly = true)
-//    public String msgIdField;
-//
-//    @Parameter(property = "protoConfigPath", defaultValue = "protoConfig.yml", readonly = true)
-//    public String protoConfigPath;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -81,41 +68,12 @@ public class ProtoGeneratorMojo extends AbstractMojo {
 
         MsgCodeBuild msgCodeBuild = new MsgCodeBuild(protoFileDescPojoList, new PathFormat(project));
 
-        if (!msgCodeBuild.buildAllMsgCode(totalMsg)) {
+        if (!msgCodeBuild.buildTotalMsgCode(totalMsg)) {
             throw new MojoFailureException("build allMsg code error");
         }
-//        List<String> compilePath = null;
-//        try {
-//            compilePath = project.getCompileClasspathElements();
-//        } catch (DependencyResolutionRequiredException e) {
-//            throw new MojoFailureException("the compile path is wrong!" + e.getMessage(), e);
-//        }
-//        try {
-//            ClassUtil classUtil = new ClassUtil(log, compilePath);
-//            Set<Class<?>> protoClasses = classUtil.scan(protoPackage, null);
-//            List<ProtoMsgInfo> allProtoMsgInfos = new ArrayList<>();
-//            // 加载配置
-//            ProtoConfig protoConfig = loadProtoConfig();
-//            if (protoConfig == null) {
-//                throw new MojoFailureException("can't find the protoConfig!Please create the protoConfig.yml in resource dir or set the protoConfigPath in pom.xml");
-//            }
-//            // 封装所有的消息
-//            buildAllProtoMsgInfos(classUtil, protoClasses, allProtoMsgInfos);
-//            // 检查消息列表是否合法
-//            List<ErrorMsg> errorMsgList = checkProtoMsg(allProtoMsgInfos);
-//            if (!errorMsgList.isEmpty()) {
-//                log.error("find repeat msg,please read follow list!");
-//                errorMsgList.forEach(errorMsg -> log.error(errorMsg.toString()));
-//                throw new MojoFailureException("find repeat msg!");
-//            }
-//            // 数据生成
-//            if (!buildProtoCode(protoConfig, allProtoMsgInfos)) {
-//                throw new MojoFailureException("build proto code failed");
-//            }
-//        } catch (MalformedURLException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
-//            log.error(e.getMessage(), e);
-//            throw new MojoFailureException(e.getMessage(), e);
-//        }
+        if (!msgCodeBuild.buildEveryMsgCode(everyMsg)) {
+            throw new MojoFailureException("build allMsg code error");
+        }
     }
 
     private void prepareExecute() {
@@ -125,86 +83,4 @@ public class ProtoGeneratorMojo extends AbstractMojo {
             System.setProperty("os.arch", "x86_64");
         }
     }
-
-//    private boolean buildProtoCode(ProtoConfig protoConfig, List<ProtoMsgInfo> allProtoMsgInfos) {
-//
-//        String resourceRoot = this.project.getBuild().getOutputDirectory();
-//        List<Exception> exceptions = new ArrayList<>();
-//        Map<String, Object> content = new HashMap<>();
-//        MsgCodeBuildBak build = new MsgCodeBuildBak(project, resourceRoot, allProtoMsgInfos, content, exceptions);
-//        content.put("infoList", allProtoMsgInfos);
-//        protoConfig.getAllMsg().forEach(build::processAllMsg);
-//        content.clear();
-//        protoConfig.getEachMsg().forEach(build::processEachMsg);
-//        content.clear();
-//        protoConfig.getEachClass().forEach(build::processEachClass);
-//        if (exceptions.isEmpty()) {
-//            return true;
-//        }
-//        for (Exception exception : exceptions) {
-//            log.error(exception.getMessage(), exception);
-//        }
-//        return false;
-//    }
-//
-//    private ProtoConfig loadProtoConfig() {
-//        String sourceRoot = project.getBuild().getOutputDirectory();
-//        File sourceFile = new File(sourceRoot + File.separator + protoConfigPath);
-//        if (!sourceFile.exists()) {
-//            return null;
-//        }
-//        Yaml yaml = new Yaml();
-//        try {
-//            return yaml.loadAs(new FileReader(sourceFile), ProtoConfig.class);
-//        } catch (FileNotFoundException e) {
-//            log.error(e.getMessage(), e);
-//        }
-//        return null;
-//    }
-//
-//    private List<ErrorMsg> checkProtoMsg(List<ProtoMsgInfo> allProtoMsgInfos) {
-//        Set<Integer> msgIdSet = new HashSet<>();
-//        List<ErrorMsg> errorMsgList = new ArrayList<>();
-//        allProtoMsgInfos.stream().sorted(Comparator.comparingInt(ProtoMsgInfo::getMaxMsgId))
-//                .forEach(info -> info.getMsgIdAndNames().entrySet().stream()
-//                        .filter(entry -> !msgIdSet.add(entry.getKey()))
-//                        .forEach(entry -> errorMsgList.add(ErrorMsg.builder()
-//                                .className(info.getClassName())
-//                                .msgId(entry.getKey())
-//                                .msgName(entry.getValue().getName())
-//                                .build())));
-//        return errorMsgList;
-//    }
-//
-//    private void buildAllProtoMsgInfos(ClassUtil classUtil, Set<Class<?>> protoClasses, List<ProtoMsgInfo> allProtoMsgInfos) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException {
-//        Class<?> msgIdClass = classUtil.loadClass(this.msgIdClass);
-//        // 类必须包含msgIdField这个字段
-//        Optional<Field> optional = Arrays.stream(msgIdClass.getDeclaredFields())
-//                .filter(f -> f.getName().equals(msgIdField)).findFirst();
-//        if (optional.isEmpty()) {
-//            return;
-//        }
-//        Field field = optional.get();
-//        GeneratedMessage.GeneratedExtension<DescriptorProtos.MessageOptions, Integer> msgIdExtension =
-//                (GeneratedMessage.GeneratedExtension<DescriptorProtos.MessageOptions, Integer>) field.get(msgIdClass);
-//
-//        MsgInfoLoad load = new MsgInfoLoad(msgIdField, msgIdExtension);
-//
-//        for (Class<?> protoClass : protoClasses) {
-//            ProtoMsgInfo.ProtoMsgInfoBuilder builder = ProtoMsgInfo.builder();
-//            AtomicInteger maxMsgId = new AtomicInteger();
-//            load.forEachMsg(protoClass, (msgId, msgDesc) -> {
-//                builder.msgIdAndName(msgId, msgDesc);
-//                if (msgId > maxMsgId.get()) {
-//                    maxMsgId.set(msgId);
-//                }
-//            });
-//            if (maxMsgId.get() == 0) {
-//                continue;
-//            }
-//            allProtoMsgInfos.add(builder.className(protoClass.getSimpleName()).maxMsgId(maxMsgId.get()).build());
-//        }
-//    }
-
-
 }

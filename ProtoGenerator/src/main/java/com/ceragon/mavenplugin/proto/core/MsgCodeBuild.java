@@ -1,6 +1,7 @@
 package com.ceragon.mavenplugin.proto.core;
 
 import com.ceragon.mavenplugin.proto.bean.config.ProtoAllMsgBuildConfig;
+import com.ceragon.mavenplugin.proto.bean.config.ProtoEachMsgBuildConfig;
 import com.ceragon.mavenplugin.proto.bean.proto.ProtoFileDescPojo;
 import com.ceragon.mavenplugin.proto.bean.proto.ProtoMessageDescPojo;
 import com.ceragon.mavenplugin.proto.constant.ContextKey;
@@ -25,7 +26,7 @@ public class MsgCodeBuild {
     List<ProtoFileDescPojo> protoFileDescPojoList;
     PathFormat pathFormat;
 
-    public boolean buildAllMsgCode(ProtoAllMsgBuildConfig[] configList) {
+    public boolean buildTotalMsgCode(ProtoAllMsgBuildConfig[] configList) {
         BuildContext context = ThreadBuildContext.getContext();
         Log log = (Log) context.getValue(ContextKey.LOG);
         MavenProject project = (MavenProject) context.getValue(ContextKey.PROJECT);
@@ -35,10 +36,10 @@ public class MsgCodeBuild {
                 .collect(Collectors.toList());
         content.put("totalMsgList", messageDescPojoList);
         content.put("totalMsgGroupList", protoFileDescPojoList);
-        return Arrays.stream(configList).allMatch(config -> buildAllMsgCodeOne(log, resourceRoot, config, content));
+        return Arrays.stream(configList).allMatch(config -> buildTotalMsgCodeOne(log, resourceRoot, config, content));
     }
 
-    private boolean buildAllMsgCodeOne(Log log, String resourceRoot, ProtoAllMsgBuildConfig config, Map<String, Object> content) {
+    private boolean buildTotalMsgCodeOne(Log log, String resourceRoot, ProtoAllMsgBuildConfig config, Map<String, Object> content) {
         String sourceName = config.getVmFile();
         String destPath = pathFormat.format(config.getTargetFile());
         try {
@@ -49,4 +50,41 @@ public class MsgCodeBuild {
             return false;
         }
     }
+
+
+    public boolean buildEveryMsgCode(ProtoEachMsgBuildConfig[] everyMsg) {
+        BuildContext context = ThreadBuildContext.getContext();
+        Log log = (Log) context.getValue(ContextKey.LOG);
+        MavenProject project = (MavenProject) context.getValue(ContextKey.PROJECT);
+        String resourceRoot = project.getBuild().getResources().get(0).getDirectory();
+        Map<String, Object> content = new HashMap<>();
+
+        Arrays.stream(everyMsg).allMatch(config ->);
+
+        List<ProtoMessageDescPojo> messageDescPojoList = protoFileDescPojoList.stream().flatMap(pojo -> pojo.getMessageList().stream())
+                .collect(Collectors.toList());
+        content.put("totalMsgList", messageDescPojoList);
+        content.put("totalMsgGroupList", protoFileDescPojoList);
+        return false;
+    }
+
+    private boolean buildEveryMsgCodeOne(Log log, String resourceRoot, ProtoEachMsgBuildConfig config) {
+        String sourceName = config.getVmFile();
+        String destPath = pathFormat.format(config.getTargetFile());
+        return this.protoFileDescPojoList.stream()
+                .filter(pojo -> config.getMsgEndWith().matches(pojo.getName()))
+                .allMatch(pojo -> buildEveryMsgCodeOne0(log, resourceRoot, config));
+    }
+
+    private boolean buildEveryMsgCodeOne0(Log log, String resourceRoot, ProtoEachMsgBuildConfig config) {
+        try {
+            String destPath = pathFormat.format(config.getTargetFile(),"MsgName", );
+            CodeGenTool.createCodeByPath(resourceRoot, config.getVmFile(), destPath, true, content);
+            return true;
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            return false;
+        }
+    }
+
 }
