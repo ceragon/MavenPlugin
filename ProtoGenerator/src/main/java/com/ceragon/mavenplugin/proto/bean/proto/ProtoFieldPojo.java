@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class ProtoFieldPojo {
-    ProtoMessageDescPojo messagePojo;
     FieldType fieldType;
     String fullName;
     int index;

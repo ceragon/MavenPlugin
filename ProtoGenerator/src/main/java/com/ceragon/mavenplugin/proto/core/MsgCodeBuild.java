@@ -31,9 +31,10 @@ public class MsgCodeBuild {
         MavenProject project = (MavenProject) context.getValue(ContextKey.PROJECT);
         String resourceRoot = project.getBuild().getResources().get(0).getDirectory();
         Map<String, Object> content = new HashMap<>();
-        List<ProtoMessageDescPojo> messageDescPojoList = protoFileDescPojoList.stream().flatMap(pojo -> pojo.getMessageDescList().stream())
+        List<ProtoMessageDescPojo> messageDescPojoList = protoFileDescPojoList.stream().flatMap(pojo -> pojo.getMessageList().stream())
                 .collect(Collectors.toList());
-        content.put("infoList", messageDescPojoList);
+        content.put("totalMsgList", messageDescPojoList);
+        content.put("totalMsgGroupList", protoFileDescPojoList);
         return Arrays.stream(configList).allMatch(config -> buildAllMsgCodeOne(log, resourceRoot, config, content));
     }
 

@@ -12,7 +12,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class ProtoMessageDescPojo {
-    ProtoFileDescPojo filePojo;
     String name;
     Descriptor descriptor;
     List<FieldDescriptor> fieldList;
@@ -27,9 +26,5 @@ public class ProtoMessageDescPojo {
             return 0;
         }
         return field.getVarintList().get(0);
-    }
-
-    public String getFileName() {
-        return filePojo.getName();
     }
 }

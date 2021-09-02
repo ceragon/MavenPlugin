@@ -39,7 +39,7 @@ public class DescriptorLoader {
             for (FileDescriptorProto fdp : descriptorSet.getFileList()) {
                 ProtoFileDescPojo fileDescPojo = new ProtoFileDescPojo();
                 fileDescPojos.add(fileDescPojo);
-                fileDescPojo.setName(fdp.getName());
+                fileDescPojo.setProto(fdp);
                 if (fdp.getMessageTypeCount() < 1) {
                     continue;
                 }
@@ -49,7 +49,7 @@ public class DescriptorLoader {
 
                 FileDescriptor fd = FileDescriptor.buildFrom(fdp, new FileDescriptor[]{});
                 for (Descriptor descriptor : fd.getMessageTypes()) {
-                    ProtoMessageDescPojo messageDescPojo = new ProtoMessageDescPojo(fileDescPojo, descriptor.getName(), descriptor, descriptor.getFields());
+                    ProtoMessageDescPojo messageDescPojo = new ProtoMessageDescPojo(descriptor.getName(), descriptor, descriptor.getFields());
                     fileDescPojo.addMessageDescPojo(messageDescPojo);
                 }
             }
