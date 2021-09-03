@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 public class ProtoFileDescPojo {
-    FileDescriptorProto proto;
+    FileDescriptorProto orig;
     String javaPackage;
     boolean javaMultipleFiles;
     List<ProtoMessageDescPojo> messageList = new ArrayList<>();
@@ -18,9 +18,9 @@ public class ProtoFileDescPojo {
     }
 
     public String getName(){
-        return proto.getName();
+        return orig.getName();
     }
     public String getJavaOuterClassname(){
-        return proto.getOptions().getJavaOuterClassname();
+        return orig.getOptions().getJavaOuterClassname();
     }
 }

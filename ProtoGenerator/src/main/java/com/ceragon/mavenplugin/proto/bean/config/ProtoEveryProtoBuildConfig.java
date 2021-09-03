@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class ProtoEachMsgBuildConfig {
+public class ProtoEveryProtoBuildConfig {
     private String vmFile;
     private String targetFile;
-    private String msgEndWith;
-    private List<String> classMatch = new ArrayList<>();
+    private List<String> protoNameMatch = new ArrayList<>();
 }

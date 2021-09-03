@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class ProtoConfig {
-    private List<ProtoAllMsgBuildConfig> allMsg = new ArrayList<>();
-    private List<ProtoEachMsgBuildConfig> eachMsg = new ArrayList<>();
-    private List<ProtoEachClassBuildConfig> eachClass = new ArrayList<>();
+    private List<ProtoTotalMsgBuildConfig> allMsg = new ArrayList<>();
+    private List<ProtoEveryMsgBuildConfig> eachMsg = new ArrayList<>();
+    private List<ProtoEveryProtoBuildConfig> eachClass = new ArrayList<>();
 }

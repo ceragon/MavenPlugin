@@ -39,7 +39,7 @@ public class DescriptorLoader {
             for (FileDescriptorProto fdp : descriptorSet.getFileList()) {
                 ProtoFileDescPojo fileDescPojo = new ProtoFileDescPojo();
                 fileDescPojos.add(fileDescPojo);
-                fileDescPojo.setProto(fdp);
+                fileDescPojo.setOrig(fdp);
                 if (fdp.getMessageTypeCount() < 1) {
                     continue;
                 }

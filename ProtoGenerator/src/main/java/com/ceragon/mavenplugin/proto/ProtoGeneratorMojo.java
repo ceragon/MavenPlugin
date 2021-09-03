@@ -1,9 +1,9 @@
 package com.ceragon.mavenplugin.proto;
 
 import com.ceragon.mavenplugin.proto.bean.OutputTarget;
-import com.ceragon.mavenplugin.proto.bean.config.ProtoAllMsgBuildConfig;
-import com.ceragon.mavenplugin.proto.bean.config.ProtoEachClassBuildConfig;
-import com.ceragon.mavenplugin.proto.bean.config.ProtoEachMsgBuildConfig;
+import com.ceragon.mavenplugin.proto.bean.config.ProtoTotalMsgBuildConfig;
+import com.ceragon.mavenplugin.proto.bean.config.ProtoEveryProtoBuildConfig;
+import com.ceragon.mavenplugin.proto.bean.config.ProtoEveryMsgBuildConfig;
 import com.ceragon.mavenplugin.proto.bean.proto.ProtoFileDescPojo;
 import com.ceragon.mavenplugin.proto.constant.ContextKey;
 import com.ceragon.mavenplugin.proto.core.DescriptorLoader;
@@ -39,11 +39,11 @@ public class ProtoGeneratorMojo extends AbstractMojo {
     private OutputTarget[] outputTargets;
 
     @Parameter(property = "totalMsg", readonly = true)
-    private ProtoAllMsgBuildConfig[] totalMsg;
+    private ProtoTotalMsgBuildConfig[] totalMsg;
     @Parameter(property = "everyMsg", readonly = true)
-    private ProtoEachMsgBuildConfig[] everyMsg;
-    @Parameter(property = "everyProtoFile", readonly = true)
-    private ProtoEachClassBuildConfig[] everyProtoFile;
+    private ProtoEveryMsgBuildConfig[] everyMsg;
+    @Parameter(property = "everyProto", readonly = true)
+    private ProtoEveryProtoBuildConfig[] everyProto;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -68,11 +68,20 @@ public class ProtoGeneratorMojo extends AbstractMojo {
 
         MsgCodeBuild msgCodeBuild = new MsgCodeBuild(protoFileDescPojoList, new PathFormat(project));
 
-        if (!msgCodeBuild.buildTotalMsgCode(totalMsg)) {
-            throw new MojoFailureException("build allMsg code error");
+        if (project.getBuild().getResources().isEmpty()) {
+            log.error("the resources is empty");
+            return;
         }
-        if (!msgCodeBuild.buildEveryMsgCode(everyMsg)) {
-            throw new MojoFailureException("build allMsg code error");
+        String resourceRoot = project.getBuild().getResources().get(0).getDirectory();
+
+        if (!msgCodeBuild.buildTotalMsgCode(resourceRoot, totalMsg)) {
+            throw new MojoFailureException("build totalMsg code error");
+        }
+        if (!msgCodeBuild.buildEveryMsgCode(resourceRoot, everyMsg)) {
+            throw new MojoFailureException("build everyMsg code error");
+        }
+        if (!msgCodeBuild.buildEveryProtoCode(resourceRoot, everyProto)) {
+            throw new MojoFailureException("build everyProto code error");
         }
     }
 

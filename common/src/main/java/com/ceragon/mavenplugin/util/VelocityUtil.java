@@ -16,4 +16,8 @@ public class VelocityUtil {
         cs[0] -= 32;
         return String.valueOf(cs);
     }
+
+    public boolean endsWith(String str, String endWith) {
+        return str.toLowerCase().endsWith(endWith.toLowerCase());
+    }
 }

@@ -13,18 +13,26 @@ import java.util.List;
 @AllArgsConstructor
 public class ProtoMessageDescPojo {
     String name;
-    Descriptor descriptor;
+    Descriptor orig;
     List<FieldDescriptor> fieldList;
 
     public long getOptionInt(int number) {
-        UnknownFieldSet unknownFieldSet = descriptor.getOptions().getUnknownFields();
+        UnknownFieldSet unknownFieldSet = orig.getOptions().getUnknownFields();
         if (!unknownFieldSet.hasField(number)) {
             return 0;
         }
-        Field field = descriptor.getOptions().getUnknownFields().getField(number);
+        Field field = orig.getOptions().getUnknownFields().getField(number);
         if (field.getVarintList().isEmpty()) {
             return 0;
         }
         return field.getVarintList().get(0);
+    }
+
+    public String getJavaPackage() {
+        return orig.getFile().getOptions().getJavaPackage();
+    }
+
+    public String getName(){
+        return orig.getName();
     }
 }

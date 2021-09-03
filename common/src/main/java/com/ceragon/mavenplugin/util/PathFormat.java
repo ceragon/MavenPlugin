@@ -1,6 +1,7 @@
 package com.ceragon.mavenplugin.util;
 
 import org.apache.maven.project.MavenProject;
+
 import java.util.Map;
 
 public class PathFormat {
@@ -18,7 +19,7 @@ public class PathFormat {
     }
 
     public String format(String sourcePath, String key, Object value) {
-        return format(sourcePath, Map.of(key, value));
+        return format(sourcePath, Map.of(key, value, key.toLowerCase(), value, key.toUpperCase(), value));
     }
 
     public String format(String sourcePath, Map<String, Object> params) {
