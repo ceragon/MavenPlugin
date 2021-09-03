@@ -43,7 +43,7 @@ public class MsgCodeBuild {
         String sourceName = config.getVmFile();
         String destPath = pathFormat.format(config.getTargetFile());
         try {
-            CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, true, content);
+            CodeGenTool.createCodeByPath(resourceRoot, sourceName, destPath, config.isOverwrite(), content);
             return true;
         } catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -76,7 +76,7 @@ public class MsgCodeBuild {
             Map<String, Object> content = new HashMap<>();
             content.put("msg", protoMessagePojo);
             String destPath = pathFormat.format(config.getTargetFile(), "MsgName", protoMessagePojo.getName());
-            CodeGenTool.createCodeByPath(resourceRoot, config.getVmFile(), destPath, true, content);
+            CodeGenTool.createCodeByPath(resourceRoot, config.getVmFile(), destPath, config.isOverwrite(), content);
             return true;
         } catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -104,7 +104,7 @@ public class MsgCodeBuild {
             content.put("proto", protoFileDescPojo);
             content.put("util", VelocityUtil.getInstance());
             String destPath = pathFormat.format(config.getTargetFile());
-            CodeGenTool.createCodeByPath(resourceRoot, config.getVmFile(), destPath, true, content);
+            CodeGenTool.createCodeByPath(resourceRoot, config.getVmFile(), destPath, config.isOverwrite(), content);
             return true;
         } catch (IOException e) {
             log.error(e.getMessage(), e);

@@ -7,7 +7,8 @@ import java.util.List;
 
 @Data
 public class ProtoEveryProtoBuildConfig {
-    private String vmFile;
-    private String targetFile;
-    private List<String> protoNameMatch = new ArrayList<>();
+    String vmFile;
+    String targetFile;
+    List<String> protoNameMatch = new ArrayList<>();
+    boolean overwrite = true;
 }
