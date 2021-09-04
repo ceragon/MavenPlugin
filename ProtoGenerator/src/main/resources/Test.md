@@ -1,5 +1,0 @@
-0 = "-I/var/folders/n3/p23chsqn2j7dj1tcg3pdkhd80000gn/T/protocjar13505979779824455021/include"
-1 = "-I/Users/ceragon/IdeaProjects/gitee/MonkeyGame/Proto/src/main/resources"
-2 = "--java_out=/Users/ceragon/IdeaProjects/gitee/MonkeyGame/Proto/target/generated-sources"
-3 = "/Users/ceragon/IdeaProjects/gitee/MonkeyGame/Proto/src/main/resources/1_100_ProtoLogin.proto"
-4 = "-v3.11.4"

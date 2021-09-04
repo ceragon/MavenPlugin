@@ -6,5 +6,5 @@ import lombok.Data;
 public class ProtoTotalMsgBuildConfig {
     String vmFile;
     String targetFile;
-    boolean overwrite;
+    boolean overwrite = true;
 }

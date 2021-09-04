@@ -11,5 +11,5 @@ public class ProtoEveryMsgBuildConfig {
     String targetFile;
     List<String> msgNameMatch;
     List<String> protoNameMatch = new ArrayList<>();
-    boolean overwrite;
+    boolean overwrite = true;
 }

@@ -75,6 +75,7 @@ public class MsgCodeBuild {
         try {
             Map<String, Object> content = new HashMap<>();
             content.put("msg", protoMessagePojo);
+            content.put("util", VelocityUtil.getInstance());
             String destPath = pathFormat.format(config.getTargetFile(), "MsgName", protoMessagePojo.getName());
             CodeGenTool.createCodeByPath(resourceRoot, config.getVmFile(), destPath, config.isOverwrite(), content);
             return true;

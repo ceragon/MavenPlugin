@@ -2,19 +2,24 @@ package com.ceragon.mavenplugin.proto.bean.proto;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
 import com.google.protobuf.UnknownFieldSet;
 import com.google.protobuf.UnknownFieldSet.Field;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.Singular;
+import lombok.Value;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Data
-@AllArgsConstructor
+@Value
+@Builder
 public class ProtoMessageDescPojo {
-    String name;
     Descriptor orig;
-    List<FieldDescriptor> fieldList;
+    @Singular("field")
+    List<ProtoFieldPojo> fieldList;
 
     public long getOptionInt(int number) {
         UnknownFieldSet unknownFieldSet = orig.getOptions().getUnknownFields();
@@ -32,7 +37,32 @@ public class ProtoMessageDescPojo {
         return orig.getFile().getOptions().getJavaPackage();
     }
 
-    public String getName(){
+    public String getName() {
         return orig.getName();
+    }
+
+    public List<String> getDependencyPackage() {
+        return fieldList.stream()
+                .filter(field -> {
+                    switch (field.getOrig().getJavaType()) {
+                        case BYTE_STRING:
+                        case ENUM:
+                        case MESSAGE:
+                            return true;
+                        default:
+                            return false;
+                    }
+                }).map(field -> {
+                    switch (field.getOrig().getJavaType()) {
+                        case ENUM:
+                            return field.getOrig().getEnumType().getFullName();
+                        case MESSAGE:
+                            return field.getOrig().getMessageType().getFullName();
+                        case BYTE_STRING:
+                            return "com.google.protobuf.ByteString";
+                        default:
+                            return "";
+                    }
+                }).collect(Collectors.toList());
     }
 }

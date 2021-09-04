@@ -1,26 +1,35 @@
 package com.ceragon.mavenplugin.proto.bean.proto;
 
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Singular;
+import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Value
+@Builder
 public class ProtoFileDescPojo {
     FileDescriptorProto orig;
-    String javaPackage;
-    boolean javaMultipleFiles;
-    List<ProtoMessageDescPojo> messageList = new ArrayList<>();
+    @Singular(value = "message")
+    List<ProtoMessageDescPojo> messageList;
 
-    public void addMessageDescPojo(ProtoMessageDescPojo messageDescPojo) {
-        messageList.add(messageDescPojo);
-    }
-
-    public String getName(){
+    public String getName() {
         return orig.getName();
     }
-    public String getJavaOuterClassname(){
+
+    public String getJavaOuterClassname() {
         return orig.getOptions().getJavaOuterClassname();
     }
+
+    public String getJavaPackage() {
+        return orig.getOptions().getJavaPackage();
+    }
+
+    public boolean getJavaMultipleFiles() {
+        return orig.getOptions().getJavaMultipleFiles();
+    }
+
+
 }
